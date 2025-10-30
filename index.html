@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя игра</title>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #00f, #00ff80);
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        h1 {
+            font-size: 2em;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* Добавлен glowing shadow */
+        }
+        #gameArea {
+            width: 90%;
+            max-width: 400px;
+            height: 400px;
+            background-color: rgba(0, 0, 0, 0.3);
+            margin: 10px auto;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #target {
+            width: 50px;
+            height: 50px;
+            background-color: yellow;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #score, #time {
+            font-size: 1.5em;
+            margin: 5px;
+        }
+        #score {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* Добавлен glowing shadow */
+        }
+        #shop {
+            margin: 10px;
+        }
+        button {
+            background-color: #008080;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        #medalTableBtn {
+            background-color: #ff4500;
+            font-size: 1.2em;
+            padding: 12px 24px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .medal-slot {
+            width: 70px;
+            height: 70px;
+            background-color: #333;
+            display: inline-block;
+            margin: 10px;
+            border-radius: 50%;
+            line-height: 70px;
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+        .medal-slot:hover {
+            transform: scale(1.1);
+        }
+        .medal-bronze { background-color: #cd7f32; box-shadow: 0 0 15px rgba(205, 127, 50, 0.7); }
+        .medal-silver { background-color: #c0c0c0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.7); }
+        .medal-diamond { background-color: #b9f2ff; box-shadow: 0 0 15px rgba(185, 242, 255, 0.7); }
+        .medal-emerald { background-color: #00ff00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.7); }
+        .medal-ultraviolet { background-color: #800080; box-shadow: 0 0 15px rgba(128, 0, 128, 0.7); }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: scaleIn 0.3s ease-out;
+        }
+        @keyframes scaleIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content h3 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #ff4500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            #gameArea {
+                height: 60vh;
+            }
+            #target {
+                width: 40px;
+                height: 40px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+            #medalTableBtn {
+                font-size: 1em;
+                padding: 10px 20px;
+            }
+            .medal-slot {
+                width: 50px;
+                height: 50px;
+                line-height: 50px;
+                font-size: 1em;
+                margin: 8px;
+            }
+            .modal-content {
+                padding: 20px;
+                max-width: 400px;
+            }
+            .modal-content h3 {
+                font-size: 1.5em;
+            }
+            .close-btn {
+                width: 30px;
+                height: 30px;
+                line-height: 30px;
+                font-size: 1.2em;
+            }
+        }
+        #pointsBtn {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* Добавлен glowing shadow */
+        }
+    </style>
+</head>
+<body>
+    <h1>Моя игра<br>Котейка спс за идею</h1>
+    <div id="score">Очки: 200</div>
+    <div id="time">Время: 30</div>
+    <div id="gameArea">
+        <div id="target"></div>
+    </div>
+    <div>
+        <button id="startBtn">Начать</button>
+        <button id="stopBtn" disabled>Стоп</button>
+        <button id="resetBtn">Сброс</button>
+    </div>
+    <div>
+        <button id="medalTableBtn">Показать стол медалей</button>
+    </div>
+    <button id="shopBtn" style="position: absolute; top: 10px; right: 10px; font-size: 0.8em; padding: 5px 10px;">Магазин</button>
+    <button id="pointsBtn" style="position: absolute; top: 10px; left: 10px; font-size: 0.8em; padding: 5px 10px; background-color: #ff4500;">Очки</button>
+    <div id="medalModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeModalBtn">×</button>
+            <h3>Стол медалей</h3>
+            <div id="medalSlots">
+                <div class="medal-slot" data-slot="1"></div>
+                <div class="medal-slot" data-slot="2"></div>
+                <div class="medal-slot" data-slot="3"></div>
+                <div class="medal-slot" data-slot="4"></div>
+                <div class="medal-slot" data-slot="5"></div>
+            </div>
+        </div>
+    </div>
+    <div id="shopModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeShopBtn">×</button>
+            <h3>Магазин</h3>
+            <button id="buyTimeBtn">Купить +7 сек (12 очков)</button>
+            <button id="buyDoubleClickBtn">Купить двойной клик (20 очков)</button>
+        </div>
+    </div>
+    <div id="pointsModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" id="closePointsBtn">×</button>
+            <h3>Очки</h3>
+            <p id="currentScore">Текущие очки: 0</p>
+            <p id="highScoreDisplay">Лучший результат: 0</p>
+        </div>
+    </div>
+
+    <script>
+        const target = document.getElementById('target');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const gameArea = document.getElementById('gameArea');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const buyTimeBtn = document.getElementById('buyTimeBtn');
+        const medalTableBtn = document.getElementById('medalTableBtn');
+        const medalModal = document.getElementById('medalModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const medalSlots = document.querySelectorAll('.medal-slot');
+        const shopBtn = document.getElementById('shopBtn');
+        const shopModal = document.getElementById('shopModal');
+        const closeShopBtn = document.getElementById('closeShopBtn');
+        const buyDoubleClickBtn = document.getElementById('buyDoubleClickBtn');
+        const pointsBtn = document.getElementById('pointsBtn');
+        const pointsModal = document.getElementById('pointsModal');
+        const closePointsBtn = document.getElementById('closePointsBtn');
+        const currentScoreDisplay = document.getElementById('currentScore');
+        const highScoreDisplayElem = document.getElementById('highScoreDisplay');
+        let score = localStorage.getItem('score') ? parseInt(localStorage.getItem('score')) : 200;
+        let time = 30;
+        let isGameRunning = false;
+        let timer;
+        let medals = JSON.parse(localStorage.getItem('medals')) || [];
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 200;
+        let clickMultiplier = 1;
+        let hasDoubleClick = false;
+
+        function saveData() {
+            localStorage.setItem('score', score);
+            localStorage.setItem('highScore', highScore);
+            localStorage.setItem('medals', JSON.stringify(medals));
+        }
+
+        function moveTarget() {
+            const maxX = gameArea.offsetWidth - target.offsetWidth;
+            const maxY = gameArea.offsetHeight - target.offsetHeight;
+            const newX = Math.random() * maxX;
+            const newY = Math.random() * maxY;
+            target.style.left = newX + 'px';
+            target.style.top = newY + 'px';
+        }
+
+        function handleClick() {
+            if (isGameRunning) {
+                score += clickMultiplier;
+                scoreDisplay.textContent = `Очки: ${score}`;
+                target.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    target.style.transform = 'scale(1)';
+                    moveTarget();
+                }, 200);
+                checkAchievements();
+                saveData();
+            }
+        }
+
+        function startGame() {
+            if (!isGameRunning) {
+                isGameRunning = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                target.style.display = 'block';
+                moveTarget();
+                timer = setInterval(() => {
+                    time--;
+                    timeDisplay.textContent = `Время: ${time}`;
+                    if (time <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopGame() {
+            if (isGameRunning) {
+                isGameRunning = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                clearInterval(timer);
+            }
+        }
+
+        function resetGame() {
+            stopGame();
+            score = 200;
+            time = 30;
+            clickMultiplier = 1;
+            hasDoubleClick = false;
+            scoreDisplay.textContent = `Очки: ${score}`;
+            timeDisplay.textContent = `Время: ${time}`;
+            target.style.display = 'none';
+            saveData();
+        }
+
+        function buyTime() {
+            if (score >= 12) {
+                score -= 12;
+                time += 7;
+                scoreDisplay.textContent = `Очки: ${score}`;
+                timeDisplay.textContent = `Время: ${time}`;
+                saveData();
+            } else {
+                alert('Недостаточно очков! Нужно 12 очков.');
+            }
+        }
+
+        function buyDoubleClick() {
+            const cost = 20;
+            if (score >= cost && !hasDoubleClick) {
+                score -= cost;
+                clickMultiplier = 2;
+                hasDoubleClick = true;
+                scoreDisplay.textContent = `Очки: ${score}`;
+                saveData();
+                alert('Вы купили двойной клик! Теперь каждый клик дает 2 очка.');
+            } else if (hasDoubleClick) {
+                alert('Вы уже купили двойной клик!');
+            } else {
+                alert('Недостаточно очков! Нужно 20 очков.');
+            }
+        }
+
+        function checkAchievements() {
+            if (score >= 300 && !medals.includes('ultraviolet') && medals.length < 5) {
+                medals.push('ultraviolet');
+                alert('Поздравляем! Вы получили ультрафиолетовую медаль за 300 очков! Легендарное достижение!');
+                updateMedalTable();
+            } else if (score >= 200 && !medals.includes('emerald') && medals.length < 5) {
+                medals.push('emerald');
+                alert('Поздравляем! Вы получили изумрудную медаль за 200 очков! Как ты это смог?');
+                updateMedalTable();
+            } else if (score >= 100 && !medals.includes('diamond') && medals.length < 5) {
+                medals.push('diamond');
+                alert('Поздравляем! Вы получили алмазную медаль за 100 очков!');
+                updateMedalTable();
+            } else if (score >= 75 && !medals.includes('silver') && medals.length < 5) {
+                medals.push('silver');
+                alert('Поздравляем! Вы получили серебряную медаль за 75 очков!');
+                updateMedalTable();
+            } else if (score >= 50 && !medals.includes('bronze') && medals.length < 5) {
+                medals.push('bronze');
+                alert('Поздравляем! Вы получили бронзовую медаль за 50 очков!');
+                updateMedalTable();
+            }
+            saveData();
+        }
+
+        function updateMedalTable() {
+            medalSlots.forEach((slot, index) => {
+                slot.innerHTML = '';
+                slot.className = 'medal-slot';
+                if (medals[index]) {
+                    slot.classList.add(`medal-${medals[index]}`);
+                    slot.innerHTML = medals[index].charAt(0).toUpperCase();
+                }
+            });
+        }
+
+        function toggleMedalTable() {
+            medalModal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            medalModal.style.display = 'none';
+        }
+
+        function toggleShop() {
+            shopModal.style.display = 'flex';
+        }
+
+        function closeShop() {
+            shopModal.style.display = 'none';
+        }
+
+        function togglePoints() {
+            currentScoreDisplay.textContent = `Текущие очки: ${score}`;
+            highScoreDisplayElem.textContent = `Лучший результат: ${highScore}`;
+            pointsModal.style.display = 'flex';
+        }
+
+        function closePoints() {
+            pointsModal.style.display = 'none';
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            clearInterval(timer);
+            target.style.display = 'none';
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+            }
+            saveData();
+            alert(`Игра окончена! Ваш счёт: ${score}\nЛучший счёт: ${highScore}`);
+        }
+
+        target.addEventListener('click', handleClick);
+        target.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleClick();
+        });
+        startBtn.addEventListener('click', startGame);
+        stopBtn.addEventListener('click', stopGame);
+        resetBtn.addEventListener('click', resetGame);
+        buyTimeBtn.addEventListener('click', buyTime);
+        buyDoubleClickBtn.addEventListener('click', buyDoubleClick);
+        medalTableBtn.addEventListener('click', toggleMedalTable);
+        closeModalBtn.addEventListener('click', closeModal);
+        shopBtn.addEventListener('click', toggleShop);
+        closeShopBtn.addEventListener('click', closeShop);
+        pointsBtn.addEventListener('click', togglePoints);
+        closePointsBtn.addEventListener('click', closePoints);
+
+        target.style.display = 'none';
+        updateMedalTable();
+        scoreDisplay.textContent = `Очки: ${score}`;
+    </script>
+</body>
+  </html>
